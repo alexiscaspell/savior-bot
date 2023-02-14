@@ -1,0 +1,10 @@
+# DEPENDENCIAS
+
+git+https://github.com/Pycord-Development/pycord
+python-dotenv
+requests
+bs4
+pydotmap
+table2ascii
+stringcase
+pydantic
