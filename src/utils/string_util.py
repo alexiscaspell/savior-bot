@@ -1,4 +1,4 @@
-from table2ascii import table2ascii as t2a, PresetStyle
+from table2ascii import table2ascii as t2a, PresetStyle,Alignment
 
 def make_str_table_old(data,title=None):
 

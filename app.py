@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 from src.savior import PrayResponse, Savior
 from typing import List
-from src.utils.string_util import make_str_table
+from src.utils.string_util import make_str_table,make_str_table_old
 from src.utils.logger_util import get_logger
 
 load_dotenv()
@@ -44,8 +44,10 @@ def format_results(service_name:str,results:List[str]):
         text = f"**No encontre nada extraño con el servicio {service_name}**\n"
         return text
     text = f"**Estos son los puntos y/o sugerencias que pude detectar para {service_name}:**\n"
+    text+= f"```diff\n"
     for r in results:
-        text+=f"* {r}\n"
+        text+=f"+ {r}\n"
+    text+= f"```"
     return text
 
 def format_response(service_name:str,response:PrayResponse):
@@ -73,6 +75,8 @@ async def helpme(ctx:ApplicationContext,name="my service",env="desa"):
             possible_services = savior.get_by_name_like(name)
             service_name = name
 
+            logger.info(f"Encontrados servicios {list(map(lambda s:s.name,possible_services))}")
+
             for s in possible_services:
                 if env in s.name:
                     service_name = s.name
@@ -90,7 +94,43 @@ async def helpme(ctx:ApplicationContext,name="my service",env="desa"):
             logger.error(e)
 
 
-    await ctx.interaction.edit_original_message(content=response)
+    await ctx.interaction.edit_original_response(content=response)
+
+@bot.slash_command(description="Lista todos los servicios bajo un determinado filtro <name>")
+async def list_services(ctx:ApplicationContext,name="my service"):
+
+    await ctx.respond("Buscando servicios ...")
+
+    async with ctx.typing():
+        response = f"Error listando servicios que coincidan con {name}"
+
+        logger.info(f"Buscando servicio {name}")
+        
+        try:
+
+            possible_services = savior.get_by_name_like(name)
+
+            service_names = list(map(lambda s:s.name,possible_services))
+
+            logger.info(f"Encontrados servicios {service_names}")
+
+            if not service_names:
+                response = "No se encontro el servicio :("
+                raise RuntimeError(f"No se encontro servicio para {name}")
+
+            response = f"**Servicios encontrados:**\n"
+            response+="```diff\n"
+
+            for s in service_names:
+                response+=f"+ {s}\n"
+
+            response+="```"
+
+        except Exception as e:
+            logger.error(e)
+
+
+    await ctx.interaction.edit_original_response(content=response)
 
 @bot.event
 async def on_ready():
